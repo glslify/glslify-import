@@ -1,0 +1,35 @@
+{
+  "name": "glslify-import",
+  "version": "0.0.0",
+  "description": "A transform stream for glslify that adds an `import` directive to your shaders.",
+  "main": "index.js",
+  "dependencies": {
+    "map-stream": "0.0.3",
+    "split": "~0.2.10",
+    "stream-combiner": "0.0.2",
+    "concat-stream": "~1.0.1",
+    "glsl-deparser": "0.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hugh Kennedy <hughskennedy@gmail.com> (http://hughskennedy.com/)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hughsk/glslify-import.git"
+  },
+  "keywords": [
+    "glslify",
+    "transform",
+    "stream",
+    "import",
+    "include",
+    "inline",
+    "shaders"
+  ],
+  "bugs": {
+    "url": "https://github.com/hughsk/glslify-import/issues"
+  }
+}
