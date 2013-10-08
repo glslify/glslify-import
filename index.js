@@ -10,7 +10,6 @@ module.exports = include
 
 function include(file) {
   var stream = combine(split(), map(write))
-  var output = ''
 
   return stream
 
