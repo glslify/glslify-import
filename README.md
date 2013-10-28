@@ -3,8 +3,6 @@
 A transform stream for [glslify](http://github.com/chrisdickinson/glslify)
 that adds an `import` directive to your shaders.
 
-Pull request to make this work is pending.
-
 ## Usage ##
 
 Given a basic shader:

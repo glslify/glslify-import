@@ -9,7 +9,8 @@
     "stream-combiner": "0.0.2",
     "concat-stream": "~1.0.1",
     "glsl-deparser": "0.0.2",
-    "graceful-fs": "~2.0.1"
+    "graceful-fs": "~2.0.1",
+    "glslify-stream": "0.0.1"
   },
   "devDependencies": {},
   "scripts": {
