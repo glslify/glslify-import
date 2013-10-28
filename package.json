@@ -1,6 +1,6 @@
 {
   "name": "glslify-import",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A transform stream for glslify that adds an `import` directive to your shaders.",
   "main": "index.js",
   "dependencies": {
