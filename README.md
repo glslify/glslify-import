@@ -1,6 +1,6 @@
 # glslify-import #
 
-A transform stream for [glslify](http://github.com/chrisdickinson/glslify)
+A transform stream for [glslify](http://github.com/stackgl/glslify)
 that adds an `import` directive to your shaders.
 
 ## Usage ##
@@ -9,7 +9,7 @@ Given a basic shader:
 
 ``` glsl
 // main.frag
-#pragma import: ./common.glsl
+#pragma glslify: import('./common.glsl')
 
 void main() {
   gl_FragColor = vec4(color, 1.0);

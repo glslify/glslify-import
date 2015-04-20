@@ -1,47 +1,46 @@
-var combine = require('stream-combiner')
-var glslify = require('glslify-stream')
-var concat = require('concat-stream')
-var map = require('map-stream')
-var fs = require('graceful-fs')
-var split = require('split')
-var eol = require('os').EOL
+const string   = require('glsl-token-string')
+const tokenize = require('glsl-tokenizer')
+const resolve  = require('glsl-resolve')
+const path     = require('path')
+const fs       = require('fs')
 
-module.exports = include
+module.exports = glslifyImport
 
-function include(file) {
-  var stream = combine(split(), map(write))
+function glslifyImport(file, src, opts, done) {
+  const tokens = tokenize(src)
 
-  return stream
+  var total = 0
 
-  function write(line, next) {
-    var cache = {}
-    var match
+  for (var i = 0; i < tokens.length; i++) (function(i) {
+    var token = tokens[i]
+    if (token.type !== 'preprocessor') return
 
-    line = String(line)
-    line = line.replace(/^\s*?#pragma\s+import\:(.+)$/g, function(full, name) {
-      match = name.trim()
-      return ''
+    var imported = /#pragma glslify:\s*import\(([^\)]+)\)/.exec(token.data)
+    if (!imported) return
+    if (!imported[1]) return
+
+    var target = imported[1]
+      .trim()
+      .replace(/^'|'$/g, '')
+      .replace(/^"|"$/g, '')
+
+    total++
+
+    resolve(target, {
+      basedir: path.dirname(file)
+    }, function(err, resolved) {
+      if (err) return done(err)
+
+      fs.readFile(resolved, 'utf8', function(err, contents) {
+        if (err) return done(err)
+
+        token.data = contents
+        if (--total) return
+
+        done(null, string(tokens))
+      })
     })
+  })(i)
 
-    if (!match) return next(null, line + eol)
-
-    glslify.resolve(file, match, function(err, dest) {
-      if (err) return stream.emit('error', err)
-      if (cache[dest]) return next(null, cache[dest])
-
-      // Handle imports recursively too!
-      fs.createReadStream(dest)
-        .on('error', error)
-        .pipe(include(dest))
-        .on('error', error)
-        .pipe(concat(function(data) {
-          next(null, cache[dest] = data + eol)
-        }))
-        .on('error', error)
-
-      function error(err) {
-        return stream.emit('error', err)
-      }
-    })
-  }
+  if (!total) return done(null, src)
 }
