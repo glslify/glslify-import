@@ -34,10 +34,14 @@ function glslifyImport(file, src, opts, done) {
       fs.readFile(resolved, 'utf8', function(err, contents) {
         if (err) return done(err)
 
-        token.data = contents
-        if (--total) return
+        glslifyImport(resolved, contents, opts, function (err, contents) {
+          if (err) return done(err)
 
-        done(null, string(tokens))
+          token.data = contents
+          if (--total) return
+
+          done(null, string(tokens))
+        })
       })
     })
   })(i)
