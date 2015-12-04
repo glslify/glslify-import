@@ -1,14 +1,14 @@
 const glslify = require('glslify')
-const path    = require('path')
-const test    = require('tape')
+const path = require('path')
+const test = require('tape')
 
 const recursive = path.join(__dirname, 'fixtures', 'recursive-origin.glsl')
 const basic = path.join(__dirname, 'fixtures', 'basic-origin.glsl')
 
-test('glslify-import: basic', function(t) {
+test('glslify-import: basic', function (t) {
   glslify.bundle(basic, {
     transform: [ require.resolve('../index.js') ]
-  }, function(err, src) {
+  }, function (err, src) {
     if (err) throw err
 
     t.ok(/\sunaltered\s/.exec(src), 'unaltered variable is unaltered')
@@ -17,10 +17,10 @@ test('glslify-import: basic', function(t) {
   })
 })
 
-test('glslify-import: recursive', function(t) {
+test('glslify-import: recursive', function (t) {
   glslify.bundle(recursive, {
     transform: [ require.resolve('../index.js') ]
-  }, function(err, src) {
+  }, function (err, src) {
     if (err) throw err
 
     t.ok(/\sunaltered\s/.exec(src), 'unaltered variable is unaltered')

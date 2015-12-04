@@ -1,17 +1,17 @@
-const string   = require('glsl-token-string')
+const string = require('glsl-token-string')
 const tokenize = require('glsl-tokenizer')
-const resolve  = require('glsl-resolve')
-const path     = require('path')
-const fs       = require('fs')
+const resolve = require('glsl-resolve')
+const path = require('path')
+const fs = require('fs')
 
 module.exports = glslifyImport
 
-function glslifyImport(file, src, opts, done) {
+function glslifyImport (file, src, opts, done) {
   const tokens = tokenize(src)
 
   var total = 0
 
-  for (var i = 0; i < tokens.length; i++) (function(i) {
+  for (var i = 0; i < tokens.length; i++) (function (i) {
     var token = tokens[i]
     if (token.type !== 'preprocessor') return
 
@@ -28,10 +28,10 @@ function glslifyImport(file, src, opts, done) {
 
     resolve(target, {
       basedir: path.dirname(file)
-    }, function(err, resolved) {
+    }, function (err, resolved) {
       if (err) return done(err)
 
-      fs.readFile(resolved, 'utf8', function(err, contents) {
+      fs.readFile(resolved, 'utf8', function (err, contents) {
         if (err) return done(err)
 
         glslifyImport(resolved, contents, opts, function (err, contents) {
