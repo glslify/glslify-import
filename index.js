@@ -73,13 +73,12 @@ function modifyRequirePaths (src, basedir, baseTarget) {
       .replace(/^'|'$/g, '')
       .replace(/^"|"$/g, '')
 
-    var absolutePath = path.resolve(targetDir, target)
-    var relativePath = './' + path.relative(basedir, absolutePath)
+    var resolvedTarget = path.resolve(targetDir, target)
 
     if (name) {
-      token.data = '#pragma glslify: ' + name + ' = require("' + [relativePath].concat(maps).join(', ') + '")'
+      token.data = '#pragma glslify: ' + name + ' = require("' + [resolvedTarget].concat(maps).join(', ') + '")'
     } else {
-      token.data = '#pragma glslify: require("' + [relativePath].concat(maps).join(', ') + '")'
+      token.data = '#pragma glslify: require("' + [resolvedTarget].concat(maps).join(', ') + '")'
     }
   }
 
