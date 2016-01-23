@@ -26,13 +26,17 @@ function glslifyImport (file, src, opts, done) {
 
     total++
 
+    var basedir = path.dirname(file)
+
     resolve(target, {
-      basedir: path.dirname(file)
+      basedir: basedir
     }, function (err, resolved) {
       if (err) return done(err)
 
       fs.readFile(resolved, 'utf8', function (err, contents) {
         if (err) return done(err)
+
+        contents = modifyRequirePaths(contents, basedir, target)
 
         glslifyImport(resolved, contents, opts, function (err, contents) {
           if (err) return done(err)
@@ -47,4 +51,36 @@ function glslifyImport (file, src, opts, done) {
   })(i)
 
   if (!total) return done(null, src)
+}
+
+function modifyRequirePaths (src, basedir, baseTarget) {
+  const tokens = tokenize(src)
+
+  var targetDir = path.dirname(path.resolve(basedir, baseTarget))
+
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i]
+    if (token.type !== 'preprocessor') continue
+
+    var required = /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^\)]+)\)/.exec(token.data)
+    if (!required) continue
+    if (!required[2]) continue
+
+    var name = required[1]
+    var maps = required[2].split(/\s?,\s?/g)
+    var target = maps.shift()
+      .trim()
+      .replace(/^'|'$/g, '')
+      .replace(/^"|"$/g, '')
+
+    var resolvedTarget = path.resolve(targetDir, target)
+
+    if (name) {
+      token.data = '#pragma glslify: ' + name + ' = require("' + [resolvedTarget].concat(maps).join(', ') + '")'
+    } else {
+      token.data = '#pragma glslify: require("' + [resolvedTarget].concat(maps).join(', ') + '")'
+    }
+  }
+
+  return string(tokens)
 }
