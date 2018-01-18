@@ -5,6 +5,7 @@ const path = require('path')
 const fs = require('fs')
 
 module.exports = glslifyImport
+module.exports.sync = glslifyImport;
 
 function glslifyImport (file, src, opts, done) {
   const tokens = tokenize(src)
@@ -28,29 +29,35 @@ function glslifyImport (file, src, opts, done) {
 
     var basedir = path.dirname(file)
 
-    resolve(target, {
-      basedir: basedir
-    }, function (err, resolved) {
-      if (err) return done(err)
-
-      fs.readFile(resolved, 'utf8', function (err, contents) {
+    if (typeof done === 'function') {
+      resolve(target, { basedir: basedir }, function (err, resolved) {
         if (err) return done(err)
 
-        contents = modifyRequirePaths(contents, basedir, target)
-
-        glslifyImport(resolved, contents, opts, function (err, contents) {
+        fs.readFile(resolved, 'utf8', function (err, contents) {
           if (err) return done(err)
 
-          token.data = contents
-          if (--total) return
+          contents = modifyRequirePaths(contents, basedir, target)
 
-          done(null, string(tokens))
+          glslifyImport(resolved, contents, opts, function (err, contents) {
+            if (err) return done(err)
+
+            token.data = contents
+            if (--total) return
+
+            done(null, string(tokens))
+          })
         })
       })
-    })
+    } else {
+      var resolved = resolve.sync(target, { basedir: basedir });
+      var contents = fs.readFileSync(resolved, 'utf8');
+      contents = modifyRequirePaths(contents, basedir, target);
+      token.data = glslifyImport(resolved, contents, opts);
+      total--;
+    }
   })(i)
 
-  if (!total) return done(null, src)
+  if (!total) return typeof done === 'function' ? done(null, src) : string(tokens);
 }
 
 function modifyRequirePaths (src, basedir, baseTarget) {

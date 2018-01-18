@@ -1,6 +1,6 @@
 {
   "name": "glslify-import",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A transform stream for glslify that adds an `import` directive to your shaders.",
   "main": "index.js",
   "dependencies": {
@@ -9,7 +9,7 @@
     "glsl-tokenizer": "^2.0.2"
   },
   "devDependencies": {
-    "glslify": "^2.1.2",
+    "glslify": "^6.1.0",
     "tap-spec": "^3.0.0",
     "tape": "^4.0.0"
   },
