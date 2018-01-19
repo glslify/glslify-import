@@ -7,42 +7,35 @@ const basic = path.join(__dirname, 'fixtures', 'basic-origin.glsl')
 const importRequire = path.join(__dirname, 'fixtures', 'import-with-require.glsl')
 
 test('glslify-import: basic', function (t) {
-  glslify.bundle(basic, {
+  var src = glslify(basic, {
     transform: [ require.resolve('../index.js') ]
-  }, function (err, src) {
-    if (err) throw err
-
-    t.ok(/\sunaltered\s/.exec(src), 'unaltered variable is unaltered')
-    t.ok(/basicRequire/.exec(src), 'basic-require.glsl imported dependency is still included')
-    t.end()
-  })
+  });
+  t.ok(/\sunaltered\s/.exec(src), 'unaltered variable is unaltered')
+  t.ok(/basicRequire/.exec(src), 'basic-require.glsl imported dependency is still included')
+  t.end()
 })
 
 test('glslify-import: recursive', function (t) {
-  glslify.bundle(recursive, {
+  var src = glslify(recursive, {
     transform: [ require.resolve('../index.js') ]
-  }, function (err, src) {
-    if (err) throw err
+  });
 
-    t.ok(/\sunaltered\s/.exec(src), 'unaltered variable is unaltered')
-    t.ok(/basicRequire/.exec(src), 'basic-require.glsl imported dependency is still included')
-    t.ok(!/\#pragma glslify/.exec(src), 'no pragmas remaining')
-    t.equal(src.match(/main\(\)/g).length, 2, '2 copies imported')
-    t.equal(src.match(/\#define GLSLIFY/).length, 1, 'only 1 glslify definition')
-    t.end()
-  })
+  t.ok(/\sunaltered\s/.exec(src), 'unaltered variable is unaltered')
+  t.ok(/basicRequire/.exec(src), 'basic-require.glsl imported dependency is still included')
+  t.ok(!/\#pragma glslify/.exec(src), 'no pragmas remaining')
+  t.equal(src.match(/main\(\)/g).length, 2, '2 copies imported')
+  t.equal(src.match(/\#define GLSLIFY/).length, 1, 'only 1 glslify definition')
+  t.end()
 })
 
 test('glslify-import: require paths modified', function (t) {
-  glslify.bundle(importRequire, {
+  var src = glslify(importRequire, {
     transform: [ require.resolve('../index.js') ]
-  }, function (err, src) {
-    if (err) throw err
+  });
 
-    t.ok(/basicRequire/.exec(src), 'basic-require.glsl imported dependency is still included')
-    t.ok(/subRequire1/.exec(src), 'subfolder-1/basic-require.glsl imported dependency is still included')
-    t.ok(/subRequire2/.exec(src), 'subfolder-2/basic-require.glsl imported dependency is still included')
-    t.ok(!/\#pragma glslify/.exec(src), 'no pragmas remaining')
-    t.end()
-  })
+  t.ok(/basicRequire/.exec(src), 'basic-require.glsl imported dependency is still included')
+  t.ok(/subRequire1/.exec(src), 'subfolder-1/basic-require.glsl imported dependency is still included')
+  t.ok(/subRequire2/.exec(src), 'subfolder-2/basic-require.glsl imported dependency is still included')
+  t.ok(!/\#pragma glslify/.exec(src), 'no pragmas remaining')
+  t.end()
 })
