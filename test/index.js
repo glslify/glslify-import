@@ -70,5 +70,6 @@ test('glslify-import: chunk', function (t) {
   });
   t.ok(/#include <header>/.exec(src), '<header> is included');
   t.ok(/#include <main>/.exec(src), '<main> is included');
+  t.ok(/#include <chunk>/.exec(src), '<chunk> is included');
   t.end();
 });

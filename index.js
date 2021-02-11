@@ -92,7 +92,10 @@ function extractChunk(contents, chunkPattern, chunkFlags) {
     var chunkContents = new RegExp(chunkPattern, chunkFlags).exec(contents);
 
     if (chunkContents && chunkContents[1]) {
-      contents = chunkContents[1];
+      contents =
+        chunkContents.groups && chunkContents.groups.chunk
+          ? chunkContents.groups.chunk
+          : chunkContents[1];
     }
   }
 
