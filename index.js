@@ -1,93 +1,139 @@
-const string = require('glsl-token-string')
-const tokenize = require('glsl-tokenizer')
-const resolve = require('glsl-resolve')
-const path = require('path')
-const fs = require('fs')
+const string = require('glsl-token-string');
+const tokenize = require('glsl-tokenizer');
+const resolve = require('glsl-resolve');
+const path = require('path');
+const fs = require('fs');
 
-module.exports = glslifyImport
+module.exports = glslifyImport;
 module.exports.sync = glslifyImport;
 
-function glslifyImport (file, src, opts, done) {
-  const tokens = tokenize(src)
+function glslifyImport(file, src, opts, done) {
+  const tokens = tokenize(src);
 
-  var total = 0
+  var total = 0;
 
-  for (var i = 0; i < tokens.length; i++) (function (i) {
-    var token = tokens[i]
-    if (token.type !== 'preprocessor') return
+  for (var i = 0; i < tokens.length; i++)
+    (function (i) {
+      var token = tokens[i];
+      if (token.type !== 'preprocessor') return;
 
-    var imported = /#pragma glslify:\s*import\(([^\)]+)\)/.exec(token.data)
-    if (!imported) return
-    if (!imported[1]) return
+      var imported = /#pragma glslify:\s*import(.+)/.exec(token.data);
 
-    var target = imported[1]
-      .trim()
-      .replace(/^'|'$/g, '')
-      .replace(/^"|"$/g, '')
+      if (!imported) return;
 
-    total++
+      imported = imported[0].match(
+        /\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))+\)/g
+      );
 
-    var basedir = path.dirname(file)
+      if (!imported[0]) return;
 
-    if (typeof done === 'function') {
-      resolve(target, { basedir: basedir }, function (err, resolved) {
-        if (err) return done(err)
+      imported = imported.map(function (str) {
+        return str
+          .trim()
+          .replace(/^\(|\)$/g, '')
+          .replace(/^'|'$/g, '')
+          .replace(/^"|"$/g, '');
+      });
 
-        fs.readFile(resolved, 'utf8', function (err, contents) {
-          if (err) return done(err)
+      var target = imported[0];
 
-          contents = modifyRequirePaths(contents, basedir, target)
+      var chunkPattern;
+      var chunkFlags;
 
-          glslifyImport(resolved, contents, opts, function (err, contents) {
-            if (err) return done(err)
+      if (imported[1]) {
+        var chunkParts = imported[1].split('/');
+        chunkPattern = chunkParts[1];
+        chunkFlags = chunkParts.slice(-1);
+      }
 
-            token.data = contents
-            if (--total) return
+      total++;
 
-            done(null, string(tokens))
-          })
-        })
-      })
-    } else {
-      var resolved = resolve.sync(target, { basedir: basedir });
-      var contents = fs.readFileSync(resolved, 'utf8');
-      contents = modifyRequirePaths(contents, basedir, target);
-      token.data = glslifyImport(resolved, contents, opts);
-      total--;
-    }
-  })(i)
+      var basedir = path.dirname(file);
 
-  if (!total) return typeof done === 'function' ? done(null, src) : string(tokens);
+      if (typeof done === 'function') {
+        resolve(target, { basedir: basedir }, function (err, resolved) {
+          if (err) return done(err);
+
+          fs.readFile(resolved, 'utf8', function (err, contents) {
+            if (err) return done(err);
+
+            // TODO: repeat chunk logic
+
+            contents = modifyRequirePaths(contents, basedir, target);
+
+            glslifyImport(resolved, contents, opts, function (err, contents) {
+              if (err) return done(err);
+
+              token.data = contents;
+              if (--total) return;
+
+              done(null, string(tokens));
+            });
+          });
+        });
+      } else {
+        var resolved = resolve.sync(target, { basedir: basedir });
+        var contents = fs.readFileSync(resolved, 'utf8');
+
+        if (chunkPattern) {
+          var chunkContents = new RegExp(chunkPattern, chunkFlags).exec(
+            contents
+          );
+
+          if (chunkContents && chunkContents[1]) {
+            contents = chunkContents[1];
+          }
+        }
+
+        contents = modifyRequirePaths(contents, basedir, target);
+        token.data = glslifyImport(resolved, contents, opts);
+        total--;
+      }
+    })(i);
+
+  if (!total)
+    return typeof done === 'function' ? done(null, src) : string(tokens);
 }
 
-function modifyRequirePaths (src, basedir, baseTarget) {
-  const tokens = tokenize(src)
+function modifyRequirePaths(src, basedir, baseTarget) {
+  const tokens = tokenize(src);
 
-  var targetDir = path.dirname(path.resolve(basedir, baseTarget))
+  var targetDir = path.dirname(path.resolve(basedir, baseTarget));
 
   for (var i = 0; i < tokens.length; i++) {
-    var token = tokens[i]
-    if (token.type !== 'preprocessor') continue
+    var token = tokens[i];
+    if (token.type !== 'preprocessor') continue;
 
-    var required = /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^\)]+)\)/.exec(token.data)
-    if (!required) continue
-    if (!required[2]) continue
+    var required = /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^\)]+)\)/.exec(
+      token.data
+    );
+    if (!required) continue;
+    if (!required[2]) continue;
 
-    var name = required[1]
-    var maps = required[2].split(/\s?,\s?/g)
-    var target = maps.shift()
+    var name = required[1];
+    var maps = required[2].split(/\s?,\s?/g);
+    var target = maps
+      .shift()
       .trim()
       .replace(/^'|'$/g, '')
-      .replace(/^"|"$/g, '')
+      .replace(/^"|"$/g, '');
 
-    var resolvedTarget = path.resolve(targetDir, target)
+    var resolvedTarget = path.resolve(targetDir, target);
 
     if (name) {
-      token.data = '#pragma glslify: ' + name + ' = require("' + [resolvedTarget].concat(maps).join(', ') + '")'
+      token.data =
+        '#pragma glslify: ' +
+        name +
+        ' = require("' +
+        [resolvedTarget].concat(maps).join(', ') +
+        '")';
     } else {
-      token.data = '#pragma glslify: require("' + [resolvedTarget].concat(maps).join(', ') + '")'
+      token.data =
+        '#pragma glslify: require("' +
+        [resolvedTarget].concat(maps).join(', ') +
+        '")';
     }
   }
 
-  return string(tokens)
+  return string(tokens);
 }
