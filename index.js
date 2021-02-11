@@ -57,8 +57,7 @@ function glslifyImport(file, src, opts, done) {
           fs.readFile(resolved, 'utf8', function (err, contents) {
             if (err) return done(err);
 
-            // TODO: repeat chunk logic
-
+            contents = extractChunk(contents, chunkPattern, chunkFlags);
             contents = modifyRequirePaths(contents, basedir, target);
 
             glslifyImport(resolved, contents, opts, function (err, contents) {
@@ -75,24 +74,29 @@ function glslifyImport(file, src, opts, done) {
         var resolved = resolve.sync(target, { basedir: basedir });
         var contents = fs.readFileSync(resolved, 'utf8');
 
-        if (chunkPattern) {
-          var chunkContents = new RegExp(chunkPattern, chunkFlags).exec(
-            contents
-          );
-
-          if (chunkContents && chunkContents[1]) {
-            contents = chunkContents[1];
-          }
-        }
-
+        contents = extractChunk(contents, chunkPattern, chunkFlags);
         contents = modifyRequirePaths(contents, basedir, target);
+
         token.data = glslifyImport(resolved, contents, opts);
+
         total--;
       }
     })(i);
 
   if (!total)
     return typeof done === 'function' ? done(null, src) : string(tokens);
+}
+
+function extractChunk(contents, chunkPattern, chunkFlags) {
+  if (chunkPattern) {
+    var chunkContents = new RegExp(chunkPattern, chunkFlags).exec(contents);
+
+    if (chunkContents && chunkContents[1]) {
+      contents = chunkContents[1];
+    }
+  }
+
+  return contents;
 }
 
 function modifyRequirePaths(src, basedir, baseTarget) {
