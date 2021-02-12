@@ -1,13 +1,13 @@
-# glslify-import #
+# glslify-import
 
 A transform stream for [glslify](http://github.com/stackgl/glslify)
 that adds an `import` directive to your shaders.
 
-## Usage ##
+## Usage
 
 Given a basic shader:
 
-``` glsl
+```glsl
 // main.frag
 #pragma glslify: import('./common.glsl')
 
@@ -18,14 +18,14 @@ void main() {
 
 You can import `./common.glsl`:
 
-``` glsl
+```glsl
 // common.glsl
 varying vec3 color;
 ```
 
 And have the contents inlined into your shader:
 
-``` glsl
+```glsl
 varying vec3 color;
 
 void main() {
@@ -36,3 +36,11 @@ void main() {
 You can also use glslify pragmas and the like from your imported files as well.
 Useful for the cases when you want to include a common "base" set of
 definitions in your shaders without losing the niceties of glslify.
+
+#### Importing chunks
+
+To import a specific chunk from a file you can pass a regular expression with a named capture group called `chunk`.
+
+```glsl
+#pragma glslify: import('./common.glsl')(/vec4 diffuseColor([^;]+);(?<chunk>.*)}/gs)
+```
